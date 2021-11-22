@@ -55,9 +55,9 @@ class OCRDataset(Dataset):
         img = torch.from_numpy(img).float()
 
         tokens = torch.ones(self.max_len, dtype=int) * self.vocab.padding_idx
-        for idx, token in enumerate([self.vocab.sos_token] + label + [self.vocab.eos_token]):
+        for idx, token in enumerate([self.vocab.sos_token] + label):
             tokens[idx] = self.vocab.stoi[token]
-            
+
         shifted_right_tokens = torch.ones(self.max_len, dtype=int) * self.vocab.padding_idx
         for idx, token in enumerate(label + [self.vocab.eos_token]):
             shifted_right_tokens[idx] = self.vocab.stoi[token]
