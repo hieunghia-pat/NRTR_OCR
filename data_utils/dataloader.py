@@ -57,8 +57,12 @@ class OCRDataset(Dataset):
         tokens = torch.ones(self.max_len, dtype=int) * self.vocab.padding_idx
         for idx, token in enumerate([self.vocab.sos_token] + label + [self.vocab.eos_token]):
             tokens[idx] = self.vocab.stoi[token]
+            
+        shifted_right_tokens = torch.ones(self.max_len, dtype=int) * self.vocab.padding_idx
+        for idx, token in enumerate(label + [self.vocab.eos_token]):
+            shifted_right_tokens[idx] = self.vocab.stoi[token]
         
-        return img, tokens
+        return img, tokens, shifted_right_tokens
 
     def get_groundtruth(self, img_dir):
         self.max_len = 0
@@ -88,25 +92,11 @@ class OCRDataset(Dataset):
 
 class Batch:
     "Object for holding a batch of data with mask during training."
-    def __init__(self, imgs, tokens, pad=0):
+    def __init__(self, imgs, tokens, shifted_right_tokens, pad=0):
         self.imgs = imgs.cuda()
         self.src_mask = None
         self.tokens = tokens.cuda()
+        self.shifted_right_tokens = shifted_right_tokens.cuda()
         self.tokens_mask = make_std_mask(self.tokens, pad)
-        self.ntokens = (self.tokens != pad).sum()
-
-class FeatureExtractor(nn.Module):
-    def __init__(self, submodule, name):
-        super(FeatureExtractor, self).__init__()
-        self.submodule = submodule
-        self.name = name
-
-    def forward(self, x):
-        for name, module in self.submodule._modules.items():
-            x = module(x)
-            if name is self.name:
-                b = x.size(0)
-                c = x.size(1)
-                return x.view(b, c, -1).permute(0, 2, 1)
+        self.ntokens = (self.shifted_right_tokens != pad).sum()
         
-        return None

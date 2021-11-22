@@ -29,10 +29,10 @@ def run_epoch(loaders, train, prefix, epoch, model, loss_compute, metric, tracke
         cer_tracker = tracker.track('{}_cer'.format(prefix), tracker_class(**tracker_params))
         wer_tracker = tracker.track('{}_wer'.format(prefix), tracker_class(**tracker_params))
         
-        for imgs, tokens in pbar:
-            batch = Batch(imgs, tokens, dataset.vocab.padding_idx)
+        for imgs, tokens, shifted_tokens in pbar:
+            batch = Batch(imgs, tokens, shifted_tokens, dataset.vocab.padding_idx)
             logprobs = model(batch.imgs, batch.tokens, batch.src_mask, batch.tokens_mask)
-            loss = loss_compute(logprobs, batch.tokens, batch.ntokens)
+            loss = loss_compute(logprobs, batch.shifted_right_tokens, batch.ntokens)
             
             outs = model.get_predictions(batch.imgs, batch.src_mask, dataset.vocab, dataset.max_len)
             scores = metric.get_scores(dataset.vocab.decode_sentence(outs.cpu()), dataset.vocab.decode_sentence(tokens.cpu()))
