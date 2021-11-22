@@ -18,10 +18,6 @@ class Metrics(object):
         wer = 0
         batch_size = len(gts)
         for predicted, gt in zip(predicteds, gts):
-            if len(predicted) == 0:
-                cer += len(gt)
-                wer += len(gt.split())
-                continue
             cer += self.get_error(predicted, gt, mode="character")
             wer += self.get_error(predicted, gt, mode="word")
 
